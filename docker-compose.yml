@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # 1. Database Service
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=tickets_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Rithvik.14
+    networks:
+      - app_network
+
+  # 2. Backend Service
+  backend:
+    build: ./backend
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    env_file:
+      - ./backend/.env
+    environment:
+      - POSTGRES_HOST=db  # Connects to the 'db' service defined above
+    networks:
+      - app_network
+
+  # 3. Frontend Service
+  frontend:
+    build: ./frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    stdin_open: true
+    tty: true
+    environment:
+      - WATCHPACK_POLLING=true
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
